@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cinzel:wght@400;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", serif;
+  --font-serif: "Cormorant Garamond", serif;
+  --font-monogram: "Cinzel", serif;
+  
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-accent: #D4AF37; /* Karya Gold */
+  --color-bg-deep: var(--bg-deep);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-card: var(--bg-card);
+  --color-bg-glass: var(--bg-glass);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-hover: var(--border-hover);
+}
+
+@layer base {
+  :root {
+    --brand-primary: #0A0A0A;
+    --brand-secondary: #1A1A1A;
+    --brand-muted: rgba(10, 10, 10, 0.6);
+    --bg-deep: #FFFFFF; /* Pure White Background */
+    --bg-surface: #FBFBFB; /* Workspace Canvas */
+    --bg-card: #FFFFFF;
+    --bg-glass: rgba(255, 255, 255, 0.8);
+    --border-subtle: #E2E8F0; /* Light Separators */
+    --border-hover: #CBD5E1;
+    --scrollbar-bg: rgba(0, 0, 0, 0.05);
+    --scrollbar-thumb: rgba(212, 175, 55, 0.3);
+    --scrollbar-thumb-hover: rgba(212, 175, 55, 0.5);
+  }
+
+  :root[data-theme='light'] {
+    --brand-primary: #000000;
+    --brand-secondary: #1A1A1A;
+    --brand-muted: rgba(0, 0, 0, 0.6);
+    --bg-deep: #FFFFFF;
+    --bg-surface: #F9F9F9;
+    --bg-card: #FFFFFF;
+    --bg-glass: rgba(255, 255, 255, 0.8);
+    --border-subtle: rgba(0, 0, 0, 0.1);
+    --border-hover: rgba(0, 0, 0, 0.2);
+    --scrollbar-bg: rgba(0, 0, 0, 0.05);
+    --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.4);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-bg-deep text-brand-primary font-sans antialiased selection:bg-brand-accent/30 selection:text-brand-accent transition-colors duration-300;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tighter;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+  body {
+    background: white;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #resume-preview, #resume-preview * {
+    visibility: visible;
+  }
+  #resume-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: content-box;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.glass-panel {
+  @apply bg-bg-glass border border-border-subtle backdrop-blur-xl;
+  will-change: backdrop-filter;
+}
+
+.premium-card {
+  @apply bg-bg-glass border border-border-subtle rounded-3xl transition-all duration-500 hover:bg-bg-glass hover:border-border-hover;
+  will-change: transform, border-color;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-x-180 {
+  transform: rotateX(180deg);
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.luxury-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.luxury-border {
+  @apply border border-border-subtle hover:border-border-hover transition-all duration-500;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-br from-brand-primary via-brand-primary to-brand-muted;
+}

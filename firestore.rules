@@ -1,0 +1,207 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && (
+        (resource != null && 'userId' in resource.data && resource.data.userId == request.auth.uid) || 
+        (resource != null && 'uid' in resource.data && resource.data.uid == request.auth.uid)
+      );
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "mkarthikeya24@gmail.com" || request.auth.token.email == "Kbsn1170@gmail.com") &&
+        request.auth.token.email_verified == true;
+    }
+
+    function uidUnchanged() {
+      return (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid) &&
+             (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
+    }
+
+    function uidNotModified() {
+      return (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId) &&
+             (!('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidList(list, maxSize) {
+      return list is list && list.size() <= maxSize;
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.createdAt is string &&
+             isValidOptionalString('displayName', 0, 200) &&
+             isValidOptionalString('photoURL', 0, 1000) &&
+             isValidOptionalString('mainResumeText', 0, 1000000) &&
+             isValidOptionalString('mainResumeName', 0, 500) &&
+             (!( 'isBanned' in data ) || data.isBanned is bool);
+    }
+
+    function isValidJobRecord(data) {
+      return hasRequiredFields(['id', 'userId', 'company', 'role', 'status', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.company is string && data.company.size() > 0 && data.company.size() < 200 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 200 &&
+             data.status is string && data.status.size() > 0 && data.status.size() < 100 &&
+             data.createdAt is string &&
+             data.updatedAt is string &&
+             isValidOptionalString('jobLink', 0, 2000) &&
+             isValidOptionalString('dateApplied', 0, 100) &&
+             isValidOptionalString('location', 0, 200) &&
+             isValidOptionalString('workMode', 0, 100) &&
+             isValidOptionalString('salary', 0, 100) &&
+             isValidOptionalString('jobDescriptionSnapshot', 0, 1000000) &&
+             isValidOptionalString('interviewPrepId', 0, 100) &&
+             (!( 'skillsRequired' in data ) || isValidList(data.skillsRequired, 200)) &&
+             (!( 'keywordsExtracted' in data ) || isValidList(data.keywordsExtracted, 200)) &&
+             (!( 'atsMatchScore' in data ) || data.atsMatchScore is number) &&
+             (!( 'tailoredResumeResult' in data ) || data.tailoredResumeResult is map);
+    }
+
+    function isValidInterviewPrep(data) {
+      return hasRequiredFields(['id', 'userId', 'jobId', 'companyName', 'roleName', 'dateCreated']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.jobId is string && data.jobId.size() > 0 && data.jobId.size() < 100 &&
+             data.companyName is string && data.companyName.size() > 0 && data.companyName.size() < 200 &&
+             data.roleName is string && data.roleName.size() > 0 && data.roleName.size() < 200 &&
+             data.dateCreated is string &&
+             (!( 'status' in data ) || data.status is string) &&
+             (!( 'location' in data ) || data.location is string) &&
+             (!( 'workMode' in data ) || data.workMode is string) &&
+             (!( 'salary' in data ) || data.salary is string) &&
+             (!( 'skillsRequired' in data ) || isValidList(data.skillsRequired, 200)) &&
+             (!( 'hrQuestions' in data ) || isValidList(data.hrQuestions, 100)) &&
+             (!( 'technicalQuestions' in data ) || isValidList(data.technicalQuestions, 100)) &&
+             (!( 'assessmentPrep' in data ) || isValidList(data.assessmentPrep, 100)) &&
+             (!( 'resumeQuestions' in data ) || isValidList(data.resumeQuestions, 100)) &&
+             (!( 'companyPrep' in data ) || data.companyPrep is map) &&
+             (!( 'aceThisJob' in data ) || data.aceThisJob is map);
+    }
+
+    function isValidReview(data) {
+      return hasRequiredFields(['id', 'userId', 'message', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 5000 &&
+             data.createdAt is string &&
+             isValidOptionalString('userName', 0, 200) &&
+             isValidOptionalString('userEmail', 0, 200) &&
+             isValidOptionalString('userPhoto', 0, 1000) &&
+             (!( 'rating' in data ) || data.rating is number);
+    }
+
+    function isValidResumeHistory(data) {
+      return hasRequiredFields(['id', 'userId', 'resumeText', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.resumeText is string && data.resumeText.size() > 0 && data.resumeText.size() < 1000000 &&
+             data.createdAt is string &&
+             isValidOptionalString('company', 0, 500) &&
+             isValidOptionalString('role', 0, 500) &&
+             isValidOptionalString('jobId', 0, 100) &&
+             (!( 'atsScore' in data ) || data.atsScore is number);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && uidUnchanged();
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && uidNotModified() && areImmutableFieldsUnchanged(['uid', 'createdAt']);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /jobs/{jobId} {
+      allow get: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow list: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidJobRecord(request.resource.data) && uidUnchanged();
+      allow update: if ((isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin()) && isValidJobRecord(request.resource.data) && uidNotModified() && areImmutableFieldsUnchanged(['id', 'userId', 'createdAt']);
+      allow delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+    }
+
+    match /interviewPreps/{prepId} {
+      allow get: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow list: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidInterviewPrep(request.resource.data) && uidUnchanged();
+      allow update: if ((isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin()) && isValidInterviewPrep(request.resource.data) && uidNotModified() && areImmutableFieldsUnchanged(['id', 'userId', 'jobId', 'dateCreated']);
+      allow delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if isAuthenticated() && (isAdmin() || subscriptionId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /payments/{paymentId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /system_announcements/{announcementId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /resumeHistory/{historyId} {
+      allow list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /wallet_transactions/{transactionId} {
+      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if false; // Only via backend
+      allow update, delete: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidReview(request.resource.data) && uidUnchanged();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
